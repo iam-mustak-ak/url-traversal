@@ -31,8 +31,8 @@ function IndexPopup() {
   const openNextUrl = useCallback(() => {
     if (urls.length === 0) return
 
-    const url = urls[currentIndex]
-    console.log(url)
+    // const url = urls[currentIndex]
+    // console.log(url)
     setCurrentIndex((prev) => (prev + 1) % urls.length)
     setTimeRemaining(intervalTime)
   }, [urls, currentIndex, intervalTime])
@@ -53,9 +53,9 @@ function IndexPopup() {
 
     // Open first URL immediately
     // window.open(urls[0], "_blank")
-    console.log(urls[0])
+    // console.log(urls[0])
 
-    setCurrentIndex(1 % urls.length)
+    // setCurrentIndex(1 % urls.length)
   }
 
   const handlePause = () => {

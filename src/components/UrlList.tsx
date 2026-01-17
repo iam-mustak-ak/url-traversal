@@ -39,13 +39,15 @@ const UrlList = ({ urls, currentIndex, isRunning, onDelete }: UrlListProps) => {
             </span>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            onClick={() => onDelete(index)}>
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          {!isRunning && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              onClick={() => onDelete(index)}>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       ))}
     </div>
