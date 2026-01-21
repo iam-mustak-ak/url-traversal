@@ -5,39 +5,39 @@ import ControlButtons from "~components/ControlButtons"
 import IntervalSelector from "~components/IntervalSelector"
 import UrlInput from "~components/UrlInput"
 import UrlList from "~components/UrlList"
+import { getActiveTabsUrl } from "~lib/getActiveTabsUrl"
+import { getTabUrlsKey, storage } from "~lib/tabStorage"
 
 import "~style.css"
 
 function IndexPopup() {
   const [urls, setUrls] = useState<string[]>([])
+
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [intervalTime, setIntervalTime] = useState(60) // seconds
+  const [intervalTime, setIntervalTime] = useState(60)
   const [customInterval, setCustomInterval] = useState("")
   const [timeRemaining, setTimeRemaining] = useState(60)
   const [isRunning, setIsRunning] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
+  const [tabId, setTabId] = useState<number | null>(null)
 
   const handleAddUrl = (url: string) => {
     setUrls((prev) => [...prev, url])
   }
 
   const handleDeleteUrl = (index: number) => {
+    if (index === 0) return
     setUrls((prev) => prev.filter((_, i) => i !== index))
-    if (currentIndex >= urls.length - 1) {
-      setCurrentIndex(0)
-    }
   }
 
   const openNextUrl = useCallback(() => {
     if (urls.length === 0) return
 
-    // const url = urls[currentIndex]
-    // console.log(url)
     setCurrentIndex((prev) => (prev + 1) % urls.length)
     setTimeRemaining(intervalTime)
   }, [urls, currentIndex, intervalTime])
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (urls.length === 0) return
 
     if (isPaused) {
@@ -50,12 +50,6 @@ function IndexPopup() {
     setIsPaused(false)
     setTimeRemaining(intervalTime)
     setCurrentIndex(0)
-
-    // Open first URL immediately
-    // window.open(urls[0], "_blank")
-    // console.log(urls[0])
-
-    // setCurrentIndex(1 % urls.length)
   }
 
   const handlePause = () => {
@@ -69,6 +63,49 @@ function IndexPopup() {
     setTimeRemaining(intervalTime)
     setCurrentIndex(0)
   }
+
+  const handleReorder = (from: number, to: number) => {
+    setUrls((prev) => {
+      const updated = [...prev]
+      const [moved] = updated.splice(from, 1)
+      updated.splice(to, 0, moved)
+      return updated
+    })
+  }
+
+  // added current tab url to the state
+  useEffect(() => {
+    const init = async () => {
+      const tabUrl = await getActiveTabsUrl()
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true
+      })
+
+      if (!tab?.id || !tabUrl) return
+
+      setTabId(tab.id)
+
+      const key = getTabUrlsKey(tab.id)
+      const storedUrls = await storage.get<string[]>(key)
+
+      if (storedUrls && storedUrls.length > 0) {
+        setUrls(storedUrls)
+      } else {
+        // first-time initialization
+        const initialUrls = [tabUrl]
+        setUrls(initialUrls)
+        await storage.set(key, initialUrls)
+      }
+    }
+
+    init()
+  }, [])
+
+  useEffect(() => {
+    if (!tabId) return
+    storage.set(getTabUrlsKey(tabId), urls)
+  }, [urls, tabId])
 
   // Timer effect
   useEffect(() => {
@@ -124,7 +161,9 @@ function IndexPopup() {
             urls={urls}
             currentIndex={currentIndex}
             isRunning={isRunning && !isPaused}
+            lockedIndex={0}
             onDelete={handleDeleteUrl}
+            onReorder={handleReorder}
           />
 
           {/* Interval Selector */}
