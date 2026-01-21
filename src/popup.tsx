@@ -6,7 +6,7 @@ import IntervalSelector from "~components/IntervalSelector"
 import UrlInput from "~components/UrlInput"
 import UrlList from "~components/UrlList"
 import { getActiveTabsUrl } from "~lib/getActiveTabsUrl"
-import { getTabUrlsKey, storage } from "~lib/tabStorage"
+import { getRuntimeKey, getTabUrlsKey, storage } from "~lib/tabStorage"
 
 import "~style.css"
 
@@ -72,6 +72,42 @@ function IndexPopup() {
       return updated
     })
   }
+
+  useEffect(() => {
+    if (!tabId) return
+
+    const loadRuntime = async () => {
+      const runtime = await storage.get<{
+        intervalTime: number
+        timeRemaining: number
+        isRunning: boolean
+        isPaused: boolean
+        currentIndex: number
+      }>(getRuntimeKey(tabId))
+
+      if (!runtime) return
+
+      setIntervalTime(runtime.intervalTime)
+      setTimeRemaining(runtime.timeRemaining)
+      setIsRunning(runtime.isRunning)
+      setIsPaused(runtime.isPaused)
+      setCurrentIndex(runtime.currentIndex)
+    }
+
+    loadRuntime()
+  }, [tabId])
+
+  useEffect(() => {
+    if (!tabId) return
+
+    storage.set(getRuntimeKey(tabId), {
+      intervalTime,
+      timeRemaining,
+      isRunning,
+      isPaused,
+      currentIndex
+    })
+  }, [tabId, intervalTime, timeRemaining, isRunning, isPaused, currentIndex])
 
   // added current tab url to the state
   useEffect(() => {
