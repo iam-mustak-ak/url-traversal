@@ -1,9 +1,10 @@
 {
-  "name": "test",
-  "displayName": "Test",
-  "version": "0.0.1",
-  "description": "A basic Plasmo extension.",
-  "author": "Plasmo Corp. <foss@plasmo.com>",
+  "name": "url-traversal-timer",
+  "displayName": "URL Traversal Timer",
+  "version": "1.0.0",
+  "description": "A Chrome extension to cycle through a list of URLs at a set interval.",
+  "author": "Open Source Contributor",
+  "license": "MIT",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",

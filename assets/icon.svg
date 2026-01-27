@@ -1,0 +1,37 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2dd4bf" /> <!-- A bright teal -->
+      <stop offset="1" stop-color="#0f766e" /> <!-- Darker teal -->
+    </linearGradient>
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#000" flood-opacity="0.2"/>
+    </filter>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="15" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background Container -->
+  <rect x="32" y="32" width="448" height="448" rx="120" fill="url(#primaryGrad)" filter="url(#dropShadow)" />
+  
+  <!-- Outer Ring / Timer Track -->
+  <circle cx="256" cy="256" r="140" stroke="rgba(255,255,255,0.2)" stroke-width="32" fill="none" />
+  
+  <!-- Progress Arc (Representing time passing) -->
+  <path d="M256 116 A 140 140 0 0 1 396 256" stroke="white" stroke-width="32" stroke-linecap="round" fill="none" filter="url(#glow)" stroke-opacity="0.95" />
+  
+  <!-- Center Play/Cycle Symbol -->
+  <g transform="translate(256 256)">
+    <!-- Cycle Arrows -->
+    <path d="M-45 -55 A 70 70 0 0 1 45 -55" stroke="white" stroke-width="24" stroke-linecap="round" fill="none" />
+    <path d="M45 -55 L 35 -25 M 45 -55 L 75 -45" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    
+    <path d="M45 55 A 70 70 0 0 1 -45 55" stroke="white" stroke-width="24" stroke-linecap="round" fill="none" />
+    <path d="M-45 55 L -35 25 M -45 55 L -75 45" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  </g>
+</svg>

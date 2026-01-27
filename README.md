@@ -1,33 +1,67 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+# URL Traversal Timer
 
-## Getting Started
+A modern Chrome extension designed to automatically cycle through a list of URLs at a configurable time interval. Perfect for monitoring dashboards, kiosks, or automated browsing workflows.
 
-First, run the development server:
+## Features
+
+- **Automated Cycling**: Automatically switches the current tab to the next URL in your list after a set time.
+- **Configurable Interval**: Choose from preset intervals or set a custom time in seconds.
+- **Dynamic List**: Add, remove, and reorder URLs on the fly.
+- **Visual Timer**: Circular progress timer shows exactly when the next switch will happen.
+- **Badge Status**: Real-time badge updates on the extension icon showing countdown and pause status.
+- **Persistent State**: Your URLs and settings are saved automatically.
+- **Background Traversal**: continues to work even if the popup is closed.
+
+## Installation
+
+### From Source
+
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/yourusername/url-traversal-timer.git
+    cd url-traversal-timer
+    ```
+
+2.  Install dependencies:
+    ```bash
+    pnpm install
+    # or
+    npm install
+    ```
+
+3.  Build the extension:
+    ```bash
+    pnpm build
+    # or
+    npm run build
+    ```
+
+4.  Load into Chrome:
+    - Open `chrome://extensions/`
+    - Enable "Developer mode" in the top right.
+    - Click "Load unpacked".
+    - Select the `build/chrome-mv3-prod` directory.
+
+## Development
+
+This project is built with [Plasmo](https://docs.plasmo.com/), [React](https://react.dev/), and [Tailwind CSS](https://tailwindcss.com/).
+
+To run the development server with live reload:
 
 ```bash
 pnpm dev
-# or
-npm run dev
 ```
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
+## detailed Usage
 
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
+1.  **Add URLs**: Open the extension popup, paste a URL, and click "Add".
+2.  **Set Interval**: Click on the interval button (default 60s) to choose a new duration.
+3.  **Start**: Click the "Start" button to begin cycling. The first URL in the list will load immediately.
+4.  **Control**:
+    - **Pause**: Temporarily stop the timer.
+    - **Stop**: End the session and reset the timer.
+    - **Reorder**: Drag and drop URLs to change the sequence (when not running).
 
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
+## License
 
-## Making production build
-
-Run the following:
-
-```bash
-pnpm build
-# or
-npm run build
-```
-
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
-
-## Submit to the webstores
-
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
+MIT
