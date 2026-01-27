@@ -18,8 +18,8 @@ A modern Chrome extension designed to automatically cycle through a list of URLs
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/yourusername/url-traversal-timer.git
-    cd url-traversal-timer
+    git clone https://github.com/iam-mustak-ak/url-traversal.git
+    cd url-traversal
     ```
 
 2.  Install dependencies:
