@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
+
+import { sendToBackground } from "@plasmohq/messaging"
+import { useStorage } from "@plasmohq/storage/hook"
 
 import CircularTimer from "~components/CircularTimer"
 import ControlButtons from "~components/ControlButtons"
@@ -6,62 +9,90 @@ import IntervalSelector from "~components/IntervalSelector"
 import UrlInput from "~components/UrlInput"
 import UrlList from "~components/UrlList"
 import { getActiveTabsUrl } from "~lib/getActiveTabsUrl"
-import { getRuntimeKey, getTabUrlsKey, storage } from "~lib/tabStorage"
+import {
+  getRuntimeKey,
+  getTabUrlsKey,
+  storage,
+  type TraversalState
+} from "~lib/tabStorage"
 
 import "~style.css"
 
 function IndexPopup() {
-  const [urls, setUrls] = useState<string[]>([])
-
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [intervalTime, setIntervalTime] = useState(60)
-  const [customInterval, setCustomInterval] = useState("")
-  const [timeRemaining, setTimeRemaining] = useState(60)
-  const [isRunning, setIsRunning] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
   const [tabId, setTabId] = useState<number | null>(null)
+  
+  // Local state for configuration
+  const [urls, setUrls] = useState<string[]>([])
+  const [localInterval, setLocalInterval] = useState(60)
+  const [customInterval, setCustomInterval] = useState("")
+
+  // Sync with background traversal state
+  const [runtimeState] = useStorage<TraversalState>(
+    {
+      key: tabId ? getRuntimeKey(tabId) : "waiting_for_tab",
+      instance: storage
+    }
+  )
+
+  const isRunning = runtimeState?.isRunning ?? false
+  const isPaused = runtimeState?.isPaused ?? false
+  const intervalTime = isRunning && runtimeState
+    ? Math.floor(runtimeState.intervalMs / 1000)
+    : localInterval
+  
+  const currentIndex = isRunning && runtimeState ? runtimeState.currentIndex : 0
+  
+  // Time remaining display
+  const [timeRemaining, setTimeRemaining] = useState(localInterval)
 
   const handleAddUrl = (url: string) => {
     setUrls((prev) => [...prev, url])
   }
 
   const handleDeleteUrl = (index: number) => {
+    // If running, ideally we shouldn't allow deleting, or it won't affect running state
+    // For now we allow it but it only affects local 'urls'
     if (index === 0) return
     setUrls((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const openNextUrl = useCallback(() => {
-    if (urls.length === 0) return
-
-    setCurrentIndex((prev) => (prev + 1) % urls.length)
-    setTimeRemaining(intervalTime)
-  }, [urls, currentIndex, intervalTime])
-
   const handleStart = async () => {
-    if (urls.length === 0) return
+    if (!tabId || urls.length === 0) return
 
     if (isPaused) {
-      setIsPaused(false)
-      setIsRunning(true)
+      // Resume
+      await sendToBackground({
+        name: "resumeTraversal",
+        body: { tabId }
+      })
       return
     }
 
-    setIsRunning(true)
-    setIsPaused(false)
-    setTimeRemaining(intervalTime)
-    setCurrentIndex(0)
+    // Start new
+    await sendToBackground({
+      name: "startTraversal",
+      body: {
+        tabId,
+        urls,
+        intervalMs: localInterval * 1000
+      }
+    })
   }
 
-  const handlePause = () => {
-    setIsPaused(true)
-    setIsRunning(false)
+  const handlePause = async () => {
+    if (!tabId) return
+    await sendToBackground({
+      name: "pauseTraversal",
+      body: { tabId }
+    })
   }
 
-  const handleEnd = () => {
-    setIsRunning(false)
-    setIsPaused(false)
-    setTimeRemaining(intervalTime)
-    setCurrentIndex(0)
+  const handleEnd = async () => {
+    if (!tabId) return
+    await sendToBackground({
+      name: "stopTraversal",
+      body: { tabId }
+    })
   }
 
   const handleReorder = (from: number, to: number) => {
@@ -73,43 +104,25 @@ function IndexPopup() {
     })
   }
 
+  // Effect to update timeRemaining based on runtimeState
   useEffect(() => {
-    if (!tabId) return
-
-    const loadRuntime = async () => {
-      const runtime = await storage.get<{
-        intervalTime: number
-        timeRemaining: number
-        isRunning: boolean
-        isPaused: boolean
-        currentIndex: number
-      }>(getRuntimeKey(tabId))
-
-      if (!runtime) return
-
-      setIntervalTime(runtime.intervalTime)
-      setTimeRemaining(runtime.timeRemaining)
-      setIsRunning(runtime.isRunning)
-      setIsPaused(runtime.isPaused)
-      setCurrentIndex(runtime.currentIndex)
+    if (!isRunning || isPaused || !runtimeState) {
+      setTimeRemaining(intervalTime)
+      return
     }
 
-    loadRuntime()
-  }, [tabId])
+    const tick = () => {
+      const remainingMs = runtimeState.nextRunAt - Date.now()
+      setTimeRemaining(Math.max(0, Math.ceil(remainingMs / 1000)))
+    }
 
-  useEffect(() => {
-    if (!tabId) return
+    tick()
+    const timer = setInterval(tick, 1000)
 
-    storage.set(getRuntimeKey(tabId), {
-      intervalTime,
-      timeRemaining,
-      isRunning,
-      isPaused,
-      currentIndex
-    })
-  }, [tabId, intervalTime, timeRemaining, isRunning, isPaused, currentIndex])
+    return () => clearInterval(timer)
+  }, [isRunning, isPaused, runtimeState, intervalTime])
 
-  // added current tab url to the state
+  // Initialize Tab ID and load initial Config (URLs)
   useEffect(() => {
     const init = async () => {
       const tabUrl = await getActiveTabsUrl()
@@ -128,7 +141,6 @@ function IndexPopup() {
       if (storedUrls && storedUrls.length > 0) {
         setUrls(storedUrls)
       } else {
-        // first-time initialization
         const initialUrls = [tabUrl]
         setUrls(initialUrls)
         await storage.set(key, initialUrls)
@@ -138,34 +150,11 @@ function IndexPopup() {
     init()
   }, [])
 
+  // Persist URLs when changed
   useEffect(() => {
     if (!tabId) return
     storage.set(getTabUrlsKey(tabId), urls)
   }, [urls, tabId])
-
-  // Timer effect
-  useEffect(() => {
-    if (!isRunning || isPaused) return
-
-    const timer = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          openNextUrl()
-          return intervalTime
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [isRunning, isPaused, intervalTime, openNextUrl])
-
-  // Update time remaining when interval changes (only when not running)
-  useEffect(() => {
-    if (!isRunning && !isPaused) {
-      setTimeRemaining(intervalTime)
-    }
-  }, [intervalTime, isRunning, isPaused])
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6 w-[500px]">
@@ -194,7 +183,7 @@ function IndexPopup() {
 
           {/* URL List */}
           <UrlList
-            urls={urls}
+            urls={isRunning && runtimeState ? runtimeState.urls : urls}
             currentIndex={currentIndex}
             isRunning={isRunning && !isPaused}
             lockedIndex={0}
@@ -204,9 +193,9 @@ function IndexPopup() {
 
           {/* Interval Selector */}
           <IntervalSelector
-            selectedInterval={intervalTime}
+            selectedInterval={localInterval}
             customInterval={customInterval}
-            onIntervalChange={setIntervalTime}
+            onIntervalChange={setLocalInterval}
             onCustomIntervalChange={setCustomInterval}
             disabled={isRunning}
           />

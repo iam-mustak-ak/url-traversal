@@ -1,16 +1,5 @@
-import { Storage } from "@plasmohq/storage"
+import { getRuntimeKey, storage, type TraversalState } from "~lib/tabStorage"
 
-type TraversalState = {
-  urls: string[]
-  currentIndex: number
-  intervalMs: number
-  isRunning: boolean
-  isPaused: boolean
-}
-
-const storage = new Storage({ area: "local" })
-
-const stateKey = (tabId: number) => `utt:tab:${tabId}:state`
 const alarmName = (tabId: number) => `utt:alarm:${tabId}`
 
 export async function startTraversal(
@@ -23,62 +12,61 @@ export async function startTraversal(
     currentIndex: 0,
     intervalMs,
     isRunning: true,
-    isPaused: false
+    isPaused: false,
+    nextRunAt: Date.now() + intervalMs
   }
 
-  await storage.set(stateKey(tabId), state)
-  await scheduleNext(tabId, intervalMs)
+  await storage.set(getRuntimeKey(tabId), state)
+  schedule(tabId, state.nextRunAt)
 }
 
 export async function pauseTraversal(tabId: number) {
-  const state = await storage.get<TraversalState>(stateKey(tabId))
-  if (!state) return
+  const state = await storage.get<TraversalState>(getRuntimeKey(tabId))
+  if (!state || !state.isRunning) return
 
   state.isPaused = true
-  await storage.set(stateKey(tabId), state)
+  await storage.set(getRuntimeKey(tabId), state)
+
   await chrome.alarms.clear(alarmName(tabId))
 }
 
 export async function resumeTraversal(tabId: number) {
-  const state = await storage.get<TraversalState>(stateKey(tabId))
-  if (!state) return
+  const state = await storage.get<TraversalState>(getRuntimeKey(tabId))
+  if (!state || !state.isRunning || !state.isPaused) return
+
+  const remaining =
+    Math.max(0, state.nextRunAt - Date.now()) || state.intervalMs
 
   state.isPaused = false
-  await storage.set(stateKey(tabId), state)
-  await scheduleNext(tabId, state.intervalMs)
+  state.nextRunAt = Date.now() + remaining
+
+  await storage.set(getRuntimeKey(tabId), state)
+  schedule(tabId, state.nextRunAt)
 }
 
 export async function stopTraversal(tabId: number) {
-  await chrome.alarms.clear(alarmName(tabId))
-  await storage.remove(stateKey(tabId))
+  const state = await storage.get<TraversalState>(getRuntimeKey(tabId))
 
-  chrome.action.setBadgeText({
-    tabId,
-    text: ""
-  })
+  await chrome.alarms.clear(alarmName(tabId))
+  await storage.remove(getRuntimeKey(tabId))
+
+  chrome.action.setBadgeText({ tabId, text: "" })
 }
 
 export async function handleAlarm(tabId: number) {
-  const state = await storage.get<TraversalState>(stateKey(tabId))
+  const state = await storage.get<TraversalState>(getRuntimeKey(tabId))
   if (!state || !state.isRunning || state.isPaused) return
 
   const url = state.urls[state.currentIndex]
-
   await chrome.tabs.update(tabId, { url })
 
   state.currentIndex = (state.currentIndex + 1) % state.urls.length
-  await storage.set(stateKey(tabId), state)
+  state.nextRunAt = Date.now() + state.intervalMs
 
-  await scheduleNext(tabId, state.intervalMs)
+  await storage.set(getRuntimeKey(tabId), state)
+  schedule(tabId, state.nextRunAt)
 }
 
-async function scheduleNext(tabId: number, intervalMs: number) {
-  chrome.action.setBadgeText({
-    tabId,
-    text: "▶"
-  })
-
-  chrome.alarms.create(alarmName(tabId), {
-    when: Date.now() + intervalMs
-  })
+function schedule(tabId: number, when: number) {
+  chrome.alarms.create(alarmName(tabId), { when })
 }
