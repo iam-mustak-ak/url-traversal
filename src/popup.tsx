@@ -10,16 +10,17 @@ import UrlInput from "~components/UrlInput"
 import UrlList from "~components/UrlList"
 import { getActiveTabsUrl } from "~lib/getActiveTabsUrl"
 import {
-  getRuntimeKey,
-  getTabUrlsKey,
-  storage,
-  type TraversalState
+    getPageUrlsKey,
+    getRuntimeKey,
+    storage,
+    type TraversalState
 } from "~lib/tabStorage"
 
 import "~style.css"
 
 function IndexPopup() {
   const [tabId, setTabId] = useState<number | null>(null)
+  const [currentUrl, setCurrentUrl] = useState<string | null>(null)
   
   // Local state for configuration
   const [urls, setUrls] = useState<string[]>([])
@@ -134,8 +135,9 @@ function IndexPopup() {
       if (!tab?.id || !tabUrl) return
 
       setTabId(tab.id)
+      setCurrentUrl(tabUrl)
 
-      const key = getTabUrlsKey(tab.id)
+      const key = getPageUrlsKey(tabUrl)
       const storedUrls = await storage.get<string[]>(key)
 
       if (storedUrls && storedUrls.length > 0) {
@@ -152,9 +154,9 @@ function IndexPopup() {
 
   // Persist URLs when changed
   useEffect(() => {
-    if (!tabId) return
-    storage.set(getTabUrlsKey(tabId), urls)
-  }, [urls, tabId])
+    if (!currentUrl) return
+    storage.set(getPageUrlsKey(currentUrl), urls)
+  }, [urls, currentUrl])
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6 w-[500px]">

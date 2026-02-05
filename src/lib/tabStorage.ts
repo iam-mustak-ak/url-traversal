@@ -13,5 +13,7 @@ export const storage = new Storage({ area: "local" })
 
 export const getTabUrlsKey = (tabId: number) => `utt:tab:${tabId}:urls`
 
+export const getPageUrlsKey = (url: string) => `utt:page:${encodeURIComponent(url)}:urls`
+
 // This key is used for the active traversal state (background source of truth)
 export const getRuntimeKey = (tabId: number) => `utt:tab:${tabId}:state`
