@@ -10,10 +10,10 @@ import UrlInput from "~components/UrlInput"
 import UrlList from "~components/UrlList"
 import { getActiveTabsUrl } from "~lib/getActiveTabsUrl"
 import {
-    getPageUrlsKey,
-    getRuntimeKey,
-    storage,
-    type TraversalState
+  getPageUrlsKey,
+  getRuntimeKey,
+  storage,
+  type TraversalState
 } from "~lib/tabStorage"
 
 import "~style.css"
@@ -21,28 +21,27 @@ import "~style.css"
 function IndexPopup() {
   const [tabId, setTabId] = useState<number | null>(null)
   const [currentUrl, setCurrentUrl] = useState<string | null>(null)
-  
+
   // Local state for configuration
   const [urls, setUrls] = useState<string[]>([])
   const [localInterval, setLocalInterval] = useState(60)
   const [customInterval, setCustomInterval] = useState("")
 
   // Sync with background traversal state
-  const [runtimeState] = useStorage<TraversalState>(
-    {
-      key: tabId ? getRuntimeKey(tabId) : "waiting_for_tab",
-      instance: storage
-    }
-  )
+  const [runtimeState] = useStorage<TraversalState>({
+    key: tabId ? getRuntimeKey(tabId) : "waiting_for_tab",
+    instance: storage
+  })
 
   const isRunning = runtimeState?.isRunning ?? false
   const isPaused = runtimeState?.isPaused ?? false
-  const intervalTime = isRunning && runtimeState
-    ? Math.floor(runtimeState.intervalMs / 1000)
-    : localInterval
-  
+  const intervalTime =
+    isRunning && runtimeState
+      ? Math.floor(runtimeState.intervalMs / 1000)
+      : localInterval
+
   const currentIndex = isRunning && runtimeState ? runtimeState.currentIndex : 0
-  
+
   // Time remaining display
   const [timeRemaining, setTimeRemaining] = useState(localInterval)
 
@@ -215,7 +214,7 @@ function IndexPopup() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground opacity-60">
-          URLs open in new tabs automatically
+          The URLs will be iterated over at intervals
         </p>
       </div>
     </div>
