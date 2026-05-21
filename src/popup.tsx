@@ -202,20 +202,28 @@ function IndexPopup() {
       if (!tab?.id || !tabUrl) return
 
       setTabId(tab.id)
-      setCurrentUrl(tabUrl)
 
-      const key = getPageUrlsKey(tabUrl)
+      // Retrieve runtime state to check if traversal is active and determine starting URL
+      const activeState = await storage.get<TraversalState>(getRuntimeKey(tab.id))
+      let startUrl = tabUrl
+      if (activeState && activeState.isRunning && activeState.startUrl) {
+        startUrl = activeState.startUrl
+      }
+
+      setCurrentUrl(startUrl)
+
+      const key = getPageUrlsKey(startUrl)
       const storedUrls = await storage.get<string[]>(key)
 
       if (storedUrls && storedUrls.length > 0) {
         setUrls(storedUrls)
       } else {
-        const initialUrls = [tabUrl]
+        const initialUrls = [startUrl]
         setUrls(initialUrls)
         await storage.set(key, initialUrls)
       }
 
-      const skipKey = getPageSkipPatternsKey(tabUrl)
+      const skipKey = getPageSkipPatternsKey(startUrl)
       const storedSkipPatterns = await storage.get<string[]>(skipKey)
       if (storedSkipPatterns) {
         setSkipPatterns(storedSkipPatterns)

@@ -66,11 +66,13 @@ export async function startTraversal(
       baseIntervalMs: intervalMs,
       isRunning: true,
       isPaused: true,
+      pausedBySkip: true,
       nextRunAt: Date.now(),
       isRandom,
       minIntervalMs,
       maxIntervalMs,
-      skipPatterns
+      skipPatterns,
+      startUrl: urls[0]
     }
     await storage.set(getRuntimeKey(tabId), state)
     chrome.action.setBadgeText({ tabId, text: "PAUSE" })
@@ -93,7 +95,8 @@ export async function startTraversal(
     isRandom,
     minIntervalMs,
     maxIntervalMs,
-    skipPatterns
+    skipPatterns,
+    startUrl: urls[0]
   }
 
   await storage.set(getRuntimeKey(tabId), state)
@@ -106,6 +109,7 @@ export async function pauseTraversal(tabId: number) {
   if (!state || !state.isRunning) return
 
   state.isPaused = true
+  state.pausedBySkip = false
   await storage.set(getRuntimeKey(tabId), state)
 
   await chrome.alarms.clear(alarmName(tabId))
@@ -118,6 +122,8 @@ export async function pauseTraversal(tabId: number) {
 export async function resumeTraversal(tabId: number) {
   const state = await storage.get<TraversalState>(getRuntimeKey(tabId))
   if (!state || !state.isRunning || !state.isPaused) return
+
+  state.pausedBySkip = false
 
   let isFromSkipped = false
   try {
@@ -139,6 +145,7 @@ export async function resumeTraversal(tabId: number) {
 
     if (isNextUrlSkipped) {
       state.isPaused = true
+      state.pausedBySkip = true
       state.nextRunAt = Date.now()
       await storage.set(getRuntimeKey(tabId), state)
       
@@ -174,17 +181,24 @@ export async function resumeTraversal(tabId: number) {
 
 export async function handleTabUpdate(tabId: number, url: string) {
   const state = await storage.get<TraversalState>(getRuntimeKey(tabId))
-  if (!state || !state.isRunning || state.isPaused) return
+  if (!state || !state.isRunning) return
 
   const isUrlSkipped = matchesSkipPatterns(url, state.skipPatterns)
   if (isUrlSkipped) {
-    state.isPaused = true
-    await storage.set(getRuntimeKey(tabId), state)
+    if (!state.isPaused) {
+      state.isPaused = true
+      state.pausedBySkip = true
+      await storage.set(getRuntimeKey(tabId), state)
 
-    await chrome.alarms.clear(alarmName(tabId))
-    stopBadgeTimer(tabId)
-    chrome.action.setBadgeText({ tabId, text: "PAUSE" })
-    chrome.action.setBadgeBackgroundColor({ tabId, color: "#F59E0B" })
+      await chrome.alarms.clear(alarmName(tabId))
+      stopBadgeTimer(tabId)
+      chrome.action.setBadgeText({ tabId, text: "PAUSE" })
+      chrome.action.setBadgeBackgroundColor({ tabId, color: "#F59E0B" })
+    }
+  } else {
+    if (state.isPaused && state.pausedBySkip) {
+      await resumeTraversal(tabId)
+    }
   }
 }
 
@@ -211,6 +225,7 @@ export async function handleAlarm(tabId: number) {
 
   if (isUrlSkipped) {
     state.isPaused = true
+    state.pausedBySkip = true
     state.nextRunAt = Date.now()
     await storage.set(getRuntimeKey(tabId), state)
     

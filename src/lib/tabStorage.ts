@@ -12,6 +12,8 @@ export type TraversalState = {
   maxIntervalMs?: number
   skipPatterns?: string[]
   baseIntervalMs?: number
+  pausedBySkip?: boolean
+  startUrl?: string
 }
 
 export const storage = new Storage({ area: "local" })
