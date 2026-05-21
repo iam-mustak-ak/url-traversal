@@ -1,7 +1,7 @@
 {
   "name": "url-traversal-timer",
   "displayName": "URL Traversal Timer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Chrome extension to cycle through a list of URLs at a set interval.",
   "author": "Mustak Ahmed Khan",
   "license": "MIT",

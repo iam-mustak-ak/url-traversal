@@ -8,6 +8,7 @@ A modern, high-performance Chrome extension designed to automatically cycle brow
 
 - **Automated Cycling**: Automatically switches the current tab to the next URL in your list after the timer expires.
 - **Configurable Fixed Intervals**: Choose from preset intervals (1 min, 3 min, 5 min) or set custom times down to the minute.
+- **Skip URL Auto‑Pause/Resume**: Traversal automatically pauses when a URL matches a defined skip pattern and automatically resumes when navigating away, preserving the URL list across sessions.
 - **Random Traversal Intervals (New!)**: Specify **Min** and **Max** bounds to randomize transition timers on every transition—mimicking organic human browsing behaviors.
 - **Dynamic List**: Easily add, delete, and drag-and-drop to reorder URLs on the fly.
 - **Visual Circular HUD**: Sleek circular progress timer shows exactly how many seconds remain before the next switch.
