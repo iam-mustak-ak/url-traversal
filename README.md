@@ -1,18 +1,25 @@
 # URL Traversal Timer
 
-A modern Chrome extension designed to automatically cycle through a list of URLs at a configurable time interval. Perfect for monitoring dashboards, kiosks, or automated browsing workflows.
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Install-emerald?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/llaoilcbmlknmckecbdolgcbjneaecke?utm_source=item-share-cb)
+
+A modern, high-performance Chrome extension designed to automatically cycle browser tabs through a list of URLs at configurable or randomized time intervals. Perfect for monitoring dashboards, kiosks, organic system testing, or automated browsing workflows.
 
 ## Features
 
-- **Automated Cycling**: Automatically switches the current tab to the next URL in your list after a set time.
-- **Configurable Interval**: Choose from preset intervals or set a custom time in seconds.
-- **Dynamic List**: Add, remove, and reorder URLs on the fly.
-- **Visual Timer**: Circular progress timer shows exactly when the next switch will happen.
-- **Badge Status**: Real-time badge updates on the extension icon showing countdown and pause status.
-- **Persistent State**: Your URLs and settings are saved automatically.
-- **Background Traversal**: continues to work even if the popup is closed.
+- **Automated Cycling**: Automatically switches the current tab to the next URL in your list after the timer expires.
+- **Configurable Fixed Intervals**: Choose from preset intervals (1 min, 3 min, 5 min) or set custom times down to the minute.
+- **Random Traversal Intervals (New!)**: Specify **Min** and **Max** bounds to randomize transition timers on every transition—mimicking organic human browsing behaviors.
+- **Dynamic List**: Easily add, delete, and drag-and-drop to reorder URLs on the fly.
+- **Visual Circular HUD**: Sleek circular progress timer shows exactly how many seconds remain before the next switch.
+- **Icon Badge Status**: Real-time remaining seconds badge on the extension icon lets you track execution without opening the popup.
+- **Background Traversal**: Built with Chrome Alarms so scheduling continues working reliably even if the popup is closed.
+- **Persistent State**: URLs and settings are safely synced locally in your browser so they are ready between sessions.
 
 ## Installation
+
+### From Chrome Web Store (Recommended)
+
+Get it directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/llaoilcbmlknmckecbdolgcbjneaecke?utm_source=item-share-cb) for automated updates and quick setup.
 
 ### From Source
 
@@ -52,16 +59,24 @@ To run the development server with live reload:
 pnpm dev
 ```
 
-## detailed Usage
+## Detailed Usage
 
 1.  **Add URLs**: Open the extension popup, paste a URL, and click "Add".
-2.  **Set Interval**: Click on the interval button (default 60s) to choose a new duration.
-3.  **Start**: Click the "Start" button to begin cycling. The first URL in the list will load immediately.
+2.  **Set Interval**: 
+    - **Fixed Mode**: Set standard presets or customize exact time values.
+    - **Random Mode**: Toggle the "Random" segmented button, enter your Min and Max interval values.
+3.  **Start**: Click the "Start" button to begin cycling.
 4.  **Control**:
     - **Pause**: Temporarily stop the timer.
-    - **Stop**: End the session and reset the timer.
-    - **Reorder**: Drag and drop URLs to change the sequence (when not running).
+    - **Resume**: pick up exactly where you left off.
+    - **Stop**: End the session and reset the timers.
+    - **Reorder**: Drag and drop URLs to change the sequence.
+
+## Documentation
+
+For an interactive user manual and a comprehensive breakdown of the under-the-hood technical system (decoupled background worker architectures, chrome alarms scheduling, and local storage layouts), open the [how-it-works.html](how-it-works.html) file inside your local workspace.
 
 ## License
 
 MIT
+
