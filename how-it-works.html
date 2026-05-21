@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How It Works | URL Traversal Timer</title>
+  <meta name="description" content="Detailed guide on how the URL Traversal Timer Chrome Extension operates under the hood." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090d16;
+      --panel: #101622;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #1f2937;
+      --accent: #10b981; /* Emerald green matching the badge */
+      --accent-glow: rgba(16, 185, 129, 0.15);
+      --accent-secondary: #06b6d4; /* Cyan */
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 40%);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 0;
+    }
+
+    /* Container */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* Header styling */
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-glow);
+      color: var(--accent);
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin: 0 0 12px;
+      background: linear-gradient(135deg, #ffffff 30%, #a7f3d0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Tabs navigation */
+    .tabs-nav {
+      display: flex;
+      justify-content: center;
+      background: rgba(16, 22, 34, 0.5);
+      border: 1px solid var(--border);
+      padding: 6px;
+      border-radius: 12px;
+      max-width: 480px;
+      margin: 0 auto 40px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #042f1a;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Content Cards */
+    .tab-content {
+      display: none;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    }
+
+    h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #ffffff;
+    }
+
+    h2 span.step-num {
+      background: var(--accent-glow);
+      color: var(--accent);
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    p {
+      margin: 0 0 20px;
+    }
+
+    /* Two-column layout inside cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 32px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .card {
+        padding: 24px;
+      }
+    }
+
+    /* Icon/Feature Graphics style */
+    .visual-wrapper {
+      background: rgba(9, 13, 22, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      position: relative;
+    }
+
+    /* Feature Lists */
+    ul.feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    ul.feature-list li {
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 12px;
+      color: var(--text-muted);
+    }
+
+    ul.feature-list li strong {
+      color: var(--text);
+    }
+
+    ul.feature-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: 2px;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    /* Mini Dashboard Mockups built in Pure HTML/CSS */
+    .mock-popup {
+      background: #111827;
+      border: 1px solid #374151;
+      width: 100%;
+      max-width: 280px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      padding: 16px;
+      font-family: inherit;
+    }
+
+    .mock-header {
+      border-bottom: 1px solid #1f2937;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #f9fafb;
+    }
+
+    .mock-timer {
+      width: 100px;
+      height: 100px;
+      border: 4px solid #1f2937;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      animation: rotateRing 8s linear infinite;
+    }
+
+    .mock-timer-inner {
+      animation: counterRotateRing 8s linear infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .mock-time {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    .mock-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .mock-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .mock-btn {
+      flex: 1;
+      padding: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .mock-btn-primary {
+      background: var(--accent);
+      color: #042f1a;
+    }
+
+    .mock-btn-secondary {
+      background: #1f2937;
+      color: #e5e7eb;
+    }
+
+    /* Segmented Selector mockup */
+    .mock-selector {
+      display: flex;
+      background: #1f2937;
+      border-radius: 6px;
+      padding: 3px;
+      margin-bottom: 12px;
+    }
+
+    .mock-sel-tab {
+      flex: 1;
+      font-size: 0.7rem;
+      text-align: center;
+      padding: 4px;
+      border-radius: 4px;
+      color: #9ca3af;
+    }
+
+    .mock-sel-tab.active {
+      background: var(--accent);
+      color: #042f1a;
+      font-weight: 600;
+    }
+
+    .mock-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .mock-input-box {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 6px;
+      font-size: 0.7rem;
+      color: #ffffff;
+      position: relative;
+    }
+
+    .mock-input-box span {
+      position: absolute;
+      right: 6px;
+      color: #9ca3af;
+    }
+
+    /* Flow diagram styles */
+    .flow-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .flow-node {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+
+    .flow-node:hover {
+      border-color: var(--accent);
+    }
+
+    .flow-node-icon {
+      background: var(--accent-glow);
+      color: var(--accent);
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .flow-node-text h4 {
+      margin: 0 0 4px;
+      color: #ffffff;
+      font-size: 0.95rem;
+    }
+
+    .flow-node-text p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .flow-arrow {
+      align-self: center;
+      color: var(--border);
+      font-size: 1.25rem;
+      line-height: 1;
+      margin: -4px 0;
+      animation: bounceArrow 2s infinite;
+    }
+
+    /* Technical details callout */
+    .callout {
+      background: rgba(31, 41, 55, 0.4);
+      border-left: 4px solid var(--accent-secondary);
+      border-radius: 0 12px 12px 0;
+      padding: 16px 20px;
+      margin-top: 24px;
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+
+    .callout strong {
+      color: var(--accent-secondary);
+    }
+
+    /* Footer contact */
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Keyframes */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes rotateRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes counterRotateRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(-360deg); }
+    }
+
+    @keyframes bounceArrow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(4px); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Architecture & Guide</div>
+      <h1>URL Traversal Timer</h1>
+      <p>A high-performance Chrome extension cycling browser tabs through a queue of URLs, running completely offline and in the background.</p>
+    </header>
+
+    <!-- Tabs controls -->
+    <nav class="tabs-nav" aria-label="Documentation sections">
+      <button class="tab-btn active" onclick="switchTab(event, 'user-guide')">User Manual</button>
+      <button class="tab-btn" onclick="switchTab(event, 'tech-architecture')">Technical System</button>
+    </nav>
+
+    <!-- Tab 1: User Guide -->
+    <main id="user-guide" class="tab-content active">
+      <!-- Step 1 -->
+      <section class="card">
+        <div class="grid-2">
+          <div>
+            <h2><span class="step-num">1</span> Queue Your Target URLs</h2>
+            <p>The traversal runs inside your **active browser tab**, keeping you inside your current context and session authentication state (e.g. logged-in sessions stay active).</p>
+            <ul class="feature-list">
+              <li><strong>Current URL Auto-Add:</strong> The active URL is loaded into the queue automatically on launch.</li>
+              <li><strong>Queue Customization:</strong> Add custom links or delete existing entries from the list.</li>
+              <li><strong>Reordering Support:</strong> Drag and drop URLs to define your custom browsing sequence.</li>
+            </ul>
+          </div>
+          <div class="visual-wrapper">
+            <!-- Graphical mock of the popup URL list -->
+            <div style="background: #111827; border: 1px solid #374151; border-radius: 8px; width:100%; max-width:240px; padding: 12px; font-size: 0.75rem;">
+              <div style="color: #9ca3af; margin-bottom: 8px; font-weight: 500;">Active Queue:</div>
+              <div style="background: rgba(16,185,129,0.1); border: 1px solid var(--accent); padding: 8px; border-radius: 6px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span>🔗 google.com (Active)</span>
+                <span>🟢</span>
+              </div>
+              <div style="background: #1f2937; border: 1px solid #374151; padding: 8px; border-radius: 6px; color: #9ca3af; display: flex; align-items: center; justify-content: space-between;">
+                <span>🔗 github.com</span>
+                <span>≡</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2 -->
+      <section class="card">
+        <div class="grid-2">
+          <div>
+            <h2><span class="step-num">2</span> Configure Interval Timers</h2>
+            <p>Switch between two advanced timing engines based on your workflow requirements:</p>
+            <ul class="feature-list">
+              <li><strong>Fixed Mode:</strong> Choose presets (1 min, 3 min, 5 min) or key in a Custom value (in minutes). The system loops exactly on that duration.</li>
+              <li><strong>Random Mode (New!):</strong> Specify **Min** and **Max** bounds. The extension dynamically randomizes the wait time between your bounds at the start of each page load. Excellent for organic testing and mimicking human behavior.</li>
+            </ul>
+          </div>
+          <div class="visual-wrapper">
+            <!-- Graphical mock of Segmented Selector in Random Mode -->
+            <div class="mock-popup">
+              <div class="mock-selector">
+                <div class="mock-sel-tab">Fixed</div>
+                <div class="mock-sel-tab active">Random</div>
+              </div>
+              <div class="mock-inputs">
+                <div class="mock-input-box">
+                  <div style="font-size:0.5rem; color:#9ca3af;">MIN</div>
+                  <div style="font-weight: 600;">1 <span>min</span></div>
+                </div>
+                <div class="mock-input-box">
+                  <div style="font-size:0.5rem; color:#9ca3af;">MAX</div>
+                  <div style="font-weight: 600;">3 <span>min</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3 -->
+      <section class="card">
+        <div class="grid-2">
+          <div>
+            <h2><span class="step-num">3</span> Control & Monitor</h2>
+            <p>Fire up the traversal and monitor countdown progress directly from Chrome's interface:</p>
+            <ul class="feature-list">
+              <li><strong>Circular HUD Display:</strong> A circular progress indicator displays remaining seconds in real-time in the popup.</li>
+              <li><strong>Dynamic Badge Counter:</strong> Check remaining seconds directly on the extension's toolbar icon badge without opening the popup!</li>
+              <li><strong>Controls:</strong> Start, Pause, Resume, and Stop controls give you full manipulation at any point in the cycle.</li>
+            </ul>
+          </div>
+          <div class="visual-wrapper">
+            <!-- Graphical mock of the popup layout -->
+            <div class="mock-popup">
+              <div class="mock-header">URL Traversal Timer</div>
+              <div class="mock-timer">
+                <div class="mock-timer-inner">
+                  <div class="mock-time">0:45</div>
+                  <div class="mock-label">Remaining</div>
+                </div>
+              </div>
+              <div class="mock-controls">
+                <div class="mock-btn mock-btn-secondary">Pause</div>
+                <div class="mock-btn mock-btn-primary">Stop</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Tab 2: Tech Architecture -->
+    <main id="tech-architecture" class="tab-content">
+      <section class="card">
+        <h2>System Dataflow</h2>
+        <p>The URL Traversal Timer employs a decoupled frontend and background worker architecture, using **Chrome Alarms** for persistent thread scheduling and **Plasmo Local Storage** as a reactive single source of truth.</p>
+        
+        <div class="flow-container">
+          <!-- Node 1 -->
+          <div class="flow-node">
+            <div class="flow-node-icon">📱</div>
+            <div class="flow-node-text">
+              <h4>Popup Client (popup.tsx)</h4>
+              <p>Standard React components with Tailwind styling. Dispatches start, pause, and stop actions to the background worker via Plasmo Messaging pipelines, and hooks into stored states for real-time reactive renders.</p>
+            </div>
+          </div>
+          
+          <div class="flow-arrow">↓</div>
+          
+          <!-- Node 2 -->
+          <div class="flow-node">
+            <div class="flow-node-icon">⚡</div>
+            <div class="flow-node-text">
+              <h4>Background Message Receiver (messages/startTraversal.ts)</h4>
+              <p>Receives asynchronous runtime payload from popup threads (URLs, intervals, random toggles, and boundary limits) and relays commands directly to the core traversal engine.</p>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓</div>
+
+          <!-- Node 3 -->
+          <div class="flow-node">
+            <div class="flow-node-icon">⚙️</div>
+            <div class="flow-node-text">
+              <h4>State & Timing Controller (traversalEngine.ts)</h4>
+              <p>Core state orchestrator. Persists active status details into Chrome local storage. Computes exact next run timestamps (with randomized calculations on the fly when Random mode is enabled) and schedules the low-level alarms.</p>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓</div>
+
+          <!-- Node 4 -->
+          <div class="flow-node">
+            <div class="flow-node-icon">🔔</div>
+            <div class="flow-node-text">
+              <h4>Persistent Scheduler (chrome.alarms & chrome.tabs)</h4>
+              <p>Chrome Alarm triggers at the precise scheduled milliseconds. The service worker wakes up, navigates the active tab to the next URL, computes the next interval duration, updates Chrome's extension badge UI, and schedules the next cycle seamlessly.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Under The Hood Note:</strong> Standard JavaScript `setTimeout` and `setInterval` execution contexts are aggressively throttled or completely killed when Chrome extension popups close or background pages suspend. By offloading scheduling to <code>chrome.alarms</code>, the timer maintains <strong>100% reliable execution and millisecond accuracy</strong> across tab states without keeping heavy background pages alive.
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Local Storage Schema</h2>
+        <p>This extension runs entirely locally on your machine and uses zero backend dependencies. The data layout inside `chrome.storage.local` is structured as follows:</p>
+        
+        <pre style="background: #090d16; border: 1px solid var(--border); border-radius: 8px; padding: 20px; font-family: monospace; font-size: 0.85rem; color: #a7f3d0; overflow-x: auto;">
+{
+  // Current active traversal state (Key: "utt:tab:[tabId]:state")
+  "utt:tab:1320491:state": {
+    "urls": [
+      "https://google.com",
+      "https://github.com"
+    ],
+    "currentIndex": 1,
+    "isRunning": true,
+    "isPaused": false,
+    "nextRunAt": 1779838029000,
+    "intervalMs": 85000,       // Computed randomly for the current cycle
+    "isRandom": true,          // Random traversal enabled
+    "minIntervalMs": 60000,    // 1-minute floor
+    "maxIntervalMs": 180000    // 3-minute ceiling
+  },
+
+  // Saved URL queue per page (Key: "utt:page:[encodedUrl]:urls")
+  "utt:page:https%3A%2F%2Fgoogle.com:urls": [
+    "https://google.com",
+    "https://github.com"
+  ]
+}</pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>URL Traversal Timer Documentation • Built with Plasmo and React</p>
+      <p>Developer: <a href="mailto:mustakahmedkhan32@gmail.com">Mustak Ahmed Khan</a></p>
+    </footer>
+  </div>
+
+  <script>
+    function switchTab(event, tabId) {
+      // Hide all tabs
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(content => content.classList.remove('active'));
+
+      // Deactivate all buttons
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+
+      // Show current tab & activate button
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+</body>
+
+</html>

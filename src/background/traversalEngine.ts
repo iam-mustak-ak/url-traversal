@@ -27,19 +27,32 @@ function stopBadgeTimer(tabId: number) {
     badgeTimers.delete(tabId)
   }
 }
+function getRandomInterval(minMs: number, maxMs: number): number {
+  return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs
+}
 
 export async function startTraversal(
   tabId: number,
   urls: string[],
-  intervalMs: number
+  intervalMs: number,
+  isRandom?: boolean,
+  minIntervalMs?: number,
+  maxIntervalMs?: number
 ) {
+  const currentIntervalMs = isRandom && minIntervalMs && maxIntervalMs
+    ? getRandomInterval(minIntervalMs, maxIntervalMs)
+    : intervalMs
+
   const state: TraversalState = {
     urls,
     currentIndex: 0,
-    intervalMs,
+    intervalMs: currentIntervalMs,
     isRunning: true,
     isPaused: false,
-    nextRunAt: Date.now() + intervalMs
+    nextRunAt: Date.now() + currentIntervalMs,
+    isRandom,
+    minIntervalMs,
+    maxIntervalMs
   }
 
   await storage.set(getRuntimeKey(tabId), state)
@@ -94,7 +107,13 @@ export async function handleAlarm(tabId: number) {
   await chrome.tabs.update(tabId, { url })
 
   state.currentIndex = (state.currentIndex + 1) % state.urls.length
-  state.nextRunAt = Date.now() + state.intervalMs
+
+  const currentIntervalMs = state.isRandom && state.minIntervalMs && state.maxIntervalMs
+    ? getRandomInterval(state.minIntervalMs, state.maxIntervalMs)
+    : state.intervalMs
+
+  state.intervalMs = currentIntervalMs
+  state.nextRunAt = Date.now() + currentIntervalMs
 
   await storage.set(getRuntimeKey(tabId), state)
   schedule(tabId, state.nextRunAt)

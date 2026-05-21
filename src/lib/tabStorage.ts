@@ -7,6 +7,9 @@ export type TraversalState = {
   isRunning: boolean
   isPaused: boolean
   nextRunAt: number
+  isRandom?: boolean
+  minIntervalMs?: number
+  maxIntervalMs?: number
 }
 
 export const storage = new Storage({ area: "local" })

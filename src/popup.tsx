@@ -26,6 +26,9 @@ function IndexPopup() {
   const [urls, setUrls] = useState<string[]>([])
   const [localInterval, setLocalInterval] = useState(60)
   const [customInterval, setCustomInterval] = useState("")
+  const [isRandom, setIsRandom] = useState(false)
+  const [minInterval, setMinInterval] = useState("1")
+  const [maxInterval, setMaxInterval] = useState("5")
 
   // Sync with background traversal state
   const [runtimeState] = useStorage<TraversalState>({
@@ -38,6 +41,8 @@ function IndexPopup() {
   const intervalTime =
     isRunning && runtimeState
       ? Math.floor(runtimeState.intervalMs / 1000)
+      : isRandom
+      ? (parseFloat(minInterval) || 1) * 60
       : localInterval
 
   const currentIndex = isRunning && runtimeState ? runtimeState.currentIndex : 0
@@ -69,14 +74,31 @@ function IndexPopup() {
     }
 
     // Start new
-    await sendToBackground({
-      name: "startTraversal",
-      body: {
-        tabId,
-        urls,
-        intervalMs: localInterval * 1000
-      }
-    })
+    if (isRandom) {
+      const minVal = parseFloat(minInterval) || 1
+      const maxVal = Math.max(minVal, parseFloat(maxInterval) || minVal + 1)
+      await sendToBackground({
+        name: "startTraversal",
+        body: {
+          tabId,
+          urls,
+          intervalMs: 0,
+          isRandom: true,
+          minIntervalMs: minVal * 60 * 1000,
+          maxIntervalMs: maxVal * 60 * 1000
+        }
+      })
+    } else {
+      await sendToBackground({
+        name: "startTraversal",
+        body: {
+          tabId,
+          urls,
+          intervalMs: localInterval * 1000,
+          isRandom: false
+        }
+      })
+    }
   }
 
   const handlePause = async () => {
@@ -121,6 +143,30 @@ function IndexPopup() {
 
     return () => clearInterval(timer)
   }, [isRunning, isPaused, runtimeState, intervalTime])
+
+  // Synchronize local states with active runtimeState
+  useEffect(() => {
+    if (runtimeState && runtimeState.isRunning) {
+      if (runtimeState.isRandom) {
+        setIsRandom(true)
+        if (runtimeState.minIntervalMs) {
+          setMinInterval(String(runtimeState.minIntervalMs / 60000))
+        }
+        if (runtimeState.maxIntervalMs) {
+          setMaxInterval(String(runtimeState.maxIntervalMs / 60000))
+        }
+      } else {
+        setIsRandom(false)
+        const seconds = Math.floor(runtimeState.intervalMs / 1000)
+        setLocalInterval(seconds)
+        if (seconds === 60 || seconds === 180 || seconds === 300) {
+          setCustomInterval("")
+        } else {
+          setCustomInterval(String(seconds / 60))
+        }
+      }
+    }
+  }, [runtimeState])
 
   // Initialize Tab ID and load initial Config (URLs)
   useEffect(() => {
@@ -199,6 +245,12 @@ function IndexPopup() {
             onIntervalChange={setLocalInterval}
             onCustomIntervalChange={setCustomInterval}
             disabled={isRunning}
+            isRandom={isRandom}
+            onRandomChange={setIsRandom}
+            minInterval={minInterval}
+            onMinIntervalChange={setMinInterval}
+            maxInterval={maxInterval}
+            onMaxIntervalChange={setMaxInterval}
           />
 
           {/* Control Buttons */}
