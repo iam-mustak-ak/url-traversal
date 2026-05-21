@@ -6,11 +6,13 @@ import { useStorage } from "@plasmohq/storage/hook"
 import CircularTimer from "~components/CircularTimer"
 import ControlButtons from "~components/ControlButtons"
 import IntervalSelector from "~components/IntervalSelector"
+import SkipRules from "~components/SkipRules"
 import UrlInput from "~components/UrlInput"
 import UrlList from "~components/UrlList"
 import { getActiveTabsUrl } from "~lib/getActiveTabsUrl"
 import {
   getPageUrlsKey,
+  getPageSkipPatternsKey,
   getRuntimeKey,
   storage,
   type TraversalState
@@ -21,9 +23,15 @@ import "~style.css"
 function IndexPopup() {
   const [tabId, setTabId] = useState<number | null>(null)
   const [currentUrl, setCurrentUrl] = useState<string | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  // Local state for configuration
+  // Local state for configuration with manual persistence to avoid hook race conditions
   const [urls, setUrls] = useState<string[]>([])
+  const [skipPatterns, setSkipPatterns] = useState<string[]>([])
+
+  const safeUrls = urls ?? []
+  const safeSkipPatterns = skipPatterns ?? []
+
   const [localInterval, setLocalInterval] = useState(60)
   const [customInterval, setCustomInterval] = useState("")
   const [isRandom, setIsRandom] = useState(false)
@@ -51,18 +59,18 @@ function IndexPopup() {
   const [timeRemaining, setTimeRemaining] = useState(localInterval)
 
   const handleAddUrl = (url: string) => {
-    setUrls((prev) => [...prev, url])
+    setUrls((prev) => [...(prev ?? []), url])
   }
 
   const handleDeleteUrl = (index: number) => {
     // If running, ideally we shouldn't allow deleting, or it won't affect running state
     // For now we allow it but it only affects local 'urls'
     if (index === 0) return
-    setUrls((prev) => prev.filter((_, i) => i !== index))
+    setUrls((prev) => (prev ?? []).filter((_, i) => i !== index))
   }
 
   const handleStart = async () => {
-    if (!tabId || urls.length === 0) return
+    if (!tabId || safeUrls.length === 0) return
 
     if (isPaused) {
       // Resume
@@ -81,11 +89,12 @@ function IndexPopup() {
         name: "startTraversal",
         body: {
           tabId,
-          urls,
+          urls: safeUrls,
           intervalMs: 0,
           isRandom: true,
           minIntervalMs: minVal * 60 * 1000,
-          maxIntervalMs: maxVal * 60 * 1000
+          maxIntervalMs: maxVal * 60 * 1000,
+          skipPatterns: safeSkipPatterns
         }
       })
     } else {
@@ -93,9 +102,10 @@ function IndexPopup() {
         name: "startTraversal",
         body: {
           tabId,
-          urls,
+          urls: safeUrls,
           intervalMs: localInterval * 1000,
-          isRandom: false
+          isRandom: false,
+          skipPatterns: safeSkipPatterns
         }
       })
     }
@@ -119,11 +129,23 @@ function IndexPopup() {
 
   const handleReorder = (from: number, to: number) => {
     setUrls((prev) => {
-      const updated = [...prev]
+      const updated = [...(prev ?? [])]
       const [moved] = updated.splice(from, 1)
       updated.splice(to, 0, moved)
       return updated
     })
+  }
+
+  const handleAddSkipRule = (pattern: string) => {
+    setSkipPatterns((prev) => {
+      const current = prev ?? []
+      if (current.includes(pattern)) return current
+      return [...current, pattern]
+    })
+  }
+
+  const handleDeleteSkipRule = (index: number) => {
+    setSkipPatterns((prev) => (prev ?? []).filter((_, i) => i !== index))
   }
 
   // Effect to update timeRemaining based on runtimeState
@@ -157,7 +179,7 @@ function IndexPopup() {
         }
       } else {
         setIsRandom(false)
-        const seconds = Math.floor(runtimeState.intervalMs / 1000)
+        const seconds = Math.floor((runtimeState.baseIntervalMs ?? runtimeState.intervalMs) / 1000)
         setLocalInterval(seconds)
         if (seconds === 60 || seconds === 180 || seconds === 300) {
           setCustomInterval("")
@@ -168,7 +190,7 @@ function IndexPopup() {
     }
   }, [runtimeState])
 
-  // Initialize Tab ID and load initial Config (URLs)
+  // Initialize Tab ID and load initial config
   useEffect(() => {
     const init = async () => {
       const tabUrl = await getActiveTabsUrl()
@@ -192,6 +214,14 @@ function IndexPopup() {
         setUrls(initialUrls)
         await storage.set(key, initialUrls)
       }
+
+      const skipKey = getPageSkipPatternsKey(tabUrl)
+      const storedSkipPatterns = await storage.get<string[]>(skipKey)
+      if (storedSkipPatterns) {
+        setSkipPatterns(storedSkipPatterns)
+      }
+
+      setIsLoaded(true)
     }
 
     init()
@@ -199,9 +229,15 @@ function IndexPopup() {
 
   // Persist URLs when changed
   useEffect(() => {
-    if (!currentUrl) return
+    if (!currentUrl || !isLoaded) return
     storage.set(getPageUrlsKey(currentUrl), urls)
-  }, [urls, currentUrl])
+  }, [urls, currentUrl, isLoaded])
+
+  // Persist skip patterns when changed
+  useEffect(() => {
+    if (!currentUrl || !isLoaded) return
+    storage.set(getPageSkipPatternsKey(currentUrl), skipPatterns)
+  }, [skipPatterns, currentUrl, isLoaded])
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6 w-[500px]">
@@ -230,12 +266,21 @@ function IndexPopup() {
 
           {/* URL List */}
           <UrlList
-            urls={isRunning && runtimeState ? runtimeState.urls : urls}
+            urls={isRunning && runtimeState ? runtimeState.urls : safeUrls}
+            skipPatterns={isRunning && runtimeState ? runtimeState.skipPatterns : safeSkipPatterns}
             currentIndex={currentIndex}
             isRunning={isRunning && !isPaused}
             lockedIndex={0}
             onDelete={handleDeleteUrl}
             onReorder={handleReorder}
+          />
+
+          {/* Skip Timer Rules */}
+          <SkipRules
+            skipPatterns={isRunning && runtimeState ? (runtimeState.skipPatterns ?? []) : safeSkipPatterns}
+            onAddRule={handleAddSkipRule}
+            onDeleteRule={handleDeleteSkipRule}
+            disabled={isRunning}
           />
 
           {/* Interval Selector */}
@@ -257,7 +302,7 @@ function IndexPopup() {
           <ControlButtons
             isRunning={isRunning}
             isPaused={isPaused}
-            canStart={urls.length > 0}
+            canStart={safeUrls.length > 0}
             onStart={handleStart}
             onPause={handlePause}
             onEnd={handleEnd}

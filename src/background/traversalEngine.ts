@@ -1,5 +1,13 @@
 import { getRuntimeKey, storage, type TraversalState } from "~lib/tabStorage"
 
+function matchesSkipPatterns(url: string, skipPatterns?: string[]): boolean {
+  if (!skipPatterns || skipPatterns.length === 0) return false
+  return skipPatterns.some(pattern => {
+    const normalized = pattern.replace(/\*+$/, "")
+    return url.startsWith(normalized)
+  })
+}
+
 const alarmName = (tabId: number) => `utt:alarm:${tabId}`
 const badgeTimers = new Map<number, any>()
 
@@ -37,8 +45,31 @@ export async function startTraversal(
   intervalMs: number,
   isRandom?: boolean,
   minIntervalMs?: number,
-  maxIntervalMs?: number
+  maxIntervalMs?: number,
+  skipPatterns?: string[]
 ) {
+  const isFirstUrlSkipped = matchesSkipPatterns(urls[0], skipPatterns)
+
+  if (isFirstUrlSkipped) {
+    const state: TraversalState = {
+      urls,
+      currentIndex: 1 % urls.length,
+      intervalMs: intervalMs,
+      baseIntervalMs: intervalMs,
+      isRunning: true,
+      isPaused: true,
+      nextRunAt: Date.now(),
+      isRandom,
+      minIntervalMs,
+      maxIntervalMs,
+      skipPatterns
+    }
+    await storage.set(getRuntimeKey(tabId), state)
+    chrome.action.setBadgeText({ tabId, text: "PAUSE" })
+    chrome.action.setBadgeBackgroundColor({ tabId, color: "#F59E0B" })
+    return
+  }
+
   const currentIntervalMs = isRandom && minIntervalMs && maxIntervalMs
     ? getRandomInterval(minIntervalMs, maxIntervalMs)
     : intervalMs
@@ -47,12 +78,14 @@ export async function startTraversal(
     urls,
     currentIndex: 0,
     intervalMs: currentIntervalMs,
+    baseIntervalMs: intervalMs,
     isRunning: true,
     isPaused: false,
     nextRunAt: Date.now() + currentIntervalMs,
     isRandom,
     minIntervalMs,
-    maxIntervalMs
+    maxIntervalMs,
+    skipPatterns
   }
 
   await storage.set(getRuntimeKey(tabId), state)
@@ -78,15 +111,57 @@ export async function resumeTraversal(tabId: number) {
   const state = await storage.get<TraversalState>(getRuntimeKey(tabId))
   if (!state || !state.isRunning || !state.isPaused) return
 
-  const remaining =
-    Math.max(0, state.nextRunAt - Date.now()) || state.intervalMs
+  let isFromSkipped = false
+  try {
+    const tab = await chrome.tabs.get(tabId)
+    if (tab && tab.url) {
+      isFromSkipped = matchesSkipPatterns(tab.url, state.skipPatterns)
+    }
+  } catch (err) {
+    console.error("Failed to retrieve tab details for resume check:", err)
+  }
 
-  state.isPaused = false
-  state.nextRunAt = Date.now() + remaining
+  if (isFromSkipped) {
+    const nextUrl = state.urls[state.currentIndex]
+    await chrome.tabs.update(tabId, { url: nextUrl })
 
-  await storage.set(getRuntimeKey(tabId), state)
-  schedule(tabId, state.nextRunAt)
-  updateBadge(tabId, state.nextRunAt)
+    state.currentIndex = (state.currentIndex + 1) % state.urls.length
+
+    const isNextUrlSkipped = matchesSkipPatterns(nextUrl, state.skipPatterns)
+
+    if (isNextUrlSkipped) {
+      state.isPaused = true
+      state.nextRunAt = Date.now()
+      await storage.set(getRuntimeKey(tabId), state)
+      
+      stopBadgeTimer(tabId)
+      chrome.action.setBadgeText({ tabId, text: "PAUSE" })
+      chrome.action.setBadgeBackgroundColor({ tabId, color: "#F59E0B" })
+      return
+    }
+
+    const currentIntervalMs = state.isRandom && state.minIntervalMs && state.maxIntervalMs
+      ? getRandomInterval(state.minIntervalMs, state.maxIntervalMs)
+      : (state.baseIntervalMs ?? state.intervalMs)
+
+    state.isPaused = false
+    state.intervalMs = currentIntervalMs
+    state.nextRunAt = Date.now() + currentIntervalMs
+
+    await storage.set(getRuntimeKey(tabId), state)
+    schedule(tabId, state.nextRunAt)
+    updateBadge(tabId, state.nextRunAt)
+  } else {
+    const remaining =
+      Math.max(0, state.nextRunAt - Date.now()) || state.intervalMs
+
+    state.isPaused = false
+    state.nextRunAt = Date.now() + remaining
+
+    await storage.set(getRuntimeKey(tabId), state)
+    schedule(tabId, state.nextRunAt)
+    updateBadge(tabId, state.nextRunAt)
+  }
 }
 
 export async function stopTraversal(tabId: number) {
@@ -108,9 +183,22 @@ export async function handleAlarm(tabId: number) {
 
   state.currentIndex = (state.currentIndex + 1) % state.urls.length
 
+  const isUrlSkipped = matchesSkipPatterns(url, state.skipPatterns)
+
+  if (isUrlSkipped) {
+    state.isPaused = true
+    state.nextRunAt = Date.now()
+    await storage.set(getRuntimeKey(tabId), state)
+    
+    stopBadgeTimer(tabId)
+    chrome.action.setBadgeText({ tabId, text: "PAUSE" })
+    chrome.action.setBadgeBackgroundColor({ tabId, color: "#F59E0B" })
+    return
+  }
+
   const currentIntervalMs = state.isRandom && state.minIntervalMs && state.maxIntervalMs
     ? getRandomInterval(state.minIntervalMs, state.maxIntervalMs)
-    : state.intervalMs
+    : (state.baseIntervalMs ?? state.intervalMs)
 
   state.intervalMs = currentIntervalMs
   state.nextRunAt = Date.now() + currentIntervalMs

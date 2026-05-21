@@ -1,10 +1,11 @@
-import { ExternalLink, GripVertical, Trash2 } from "lucide-react"
+import { ExternalLink, GripVertical, Trash2, Zap } from "lucide-react"
 import { useRef } from "react"
 
 import { Button } from "./ui/Button"
 
 interface UrlListProps {
   urls: string[]
+  skipPatterns?: string[]
   currentIndex: number
   isRunning: boolean
   lockedIndex?: number
@@ -14,6 +15,7 @@ interface UrlListProps {
 
 const UrlList = ({
   urls,
+  skipPatterns,
   currentIndex,
   isRunning,
   lockedIndex = 0,
@@ -36,6 +38,10 @@ const UrlList = ({
       {urls.map((url, index) => {
         const isLocked = index === lockedIndex
         const isActive = isRunning && currentIndex === index
+        const isSkipped = skipPatterns?.some(pattern => {
+          const normalized = pattern.replace(/\*+$/, "")
+          return url.startsWith(normalized)
+        }) ?? false
 
         return (
           <div
@@ -93,17 +99,29 @@ const UrlList = ({
               </span>
             </div>
 
-            {/* Delete */}
-            {!isLocked && !isRunning && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity
-                  text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                onClick={() => onDelete(index)}>
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
+            {/* Actions */}
+            <div className="flex items-center gap-1">
+              {/* Skip Timer Indicator */}
+              {isSkipped && (
+                <div
+                  title="This URL matches a skip rule and will transition in 1s"
+                  className="flex items-center justify-center h-8 w-8 text-amber-500 bg-amber-500/10 rounded-md transition-all shrink-0">
+                  <Zap className="w-4 h-4 fill-amber-500/20 animate-pulse" />
+                </div>
+              )}
+
+              {/* Delete */}
+              {!isLocked && !isRunning && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity
+                    text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => onDelete(index)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
         )
       })}
