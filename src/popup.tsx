@@ -265,9 +265,19 @@ function IndexPopup() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground opacity-60">
-          The URLs will be iterated over at intervals
-        </p>
+        <div className="text-center space-y-2 opacity-80">
+          <p className="text-xs text-muted-foreground opacity-60">
+            The URLs will be iterated over at intervals
+          </p>
+          <a
+            href="https://iam-mustak-ak.github.io/url-traversal/how-it-works"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-xs text-accent hover:text-accent/80 hover:underline font-medium transition-colors cursor-pointer"
+          >
+            How it works &rarr;
+          </a>
+        </div>
       </div>
     </div>
   )

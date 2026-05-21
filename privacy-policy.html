@@ -6,201 +6,331 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy Policy | URL Traversal Timer</title>
   <meta name="description" content="Privacy policy for URL Traversal Timer Chrome extension." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <style>
     :root {
-      color-scheme: light;
-      --bg: #f8fafc;
-      --panel: #ffffff;
-      --text: #0f172a;
-      --muted: #475569;
-      --border: #e2e8f0;
-      --accent: #2563eb;
+      color-scheme: dark;
+      --bg: #090d16;
+      --panel: #101622;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #1f2937;
+      --accent: #10b981;
+      /* Emerald green matching the badge */
+      --accent-glow: rgba(16, 185, 129, 0.15);
+      --accent-secondary: #06b6d4;
+      /* Cyan */
+      --radius: 16px;
     }
 
     * {
       box-sizing: border-box;
+      scroll-behavior: smooth;
     }
 
     body {
       margin: 0;
-      font-family:
-        Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
-      background:
-        radial-gradient(circle at top, rgba(37, 99, 235, 0.08), transparent 35%),
-        var(--bg);
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 40%);
       color: var(--text);
-      line-height: 1.65;
+      line-height: 1.7;
+      padding: 0;
     }
 
-    .page {
+    /* Container */
+    .container {
       max-width: 880px;
       margin: 0 auto;
-      padding: 48px 20px 64px;
+      padding: 40px 24px 80px;
     }
 
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
-      overflow: hidden;
+    /* Header styling */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeIn 0.8s ease-out;
     }
 
-    .hero {
-      padding: 32px 32px 20px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(37, 99, 235, 0.06), transparent);
+    .badge {
+      display: inline-block;
+      background: var(--accent-glow);
+      color: var(--accent);
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      margin-bottom: 16px;
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: clamp(2rem, 4vw, 2.75rem);
-      line-height: 1.1;
-      letter-spacing: -0.03em;
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.25rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin: 0 0 12px;
+      background: linear-gradient(135deg, #ffffff 30%, #a7f3d0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
     }
 
-    .subtitle {
-      margin: 0;
-      color: var(--muted);
-      font-size: 1rem;
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
     }
 
-    .content {
-      padding: 28px 32px 36px;
+    /* Content Card */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
     }
 
     h2 {
-      margin: 28px 0 10px;
-      font-size: 1.1rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 32px;
+      margin-bottom: 16px;
+      color: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
     }
 
-    p,
-    li {
-      color: #1e293b;
+    p {
+      margin: 0 0 20px;
+      color: #e5e7eb;
     }
 
+    /* Feature Lists */
     ul {
-      margin: 10px 0 0;
-      padding-left: 20px;
+      margin: 16px 0;
+      padding-left: 0;
+      list-style: none;
     }
 
-    .note {
-      margin-top: 20px;
-      padding: 14px 16px;
+    ul li {
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 12px;
+      color: #d1d5db;
+    }
+
+    ul li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: 2px;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    /* Technical details callout */
+    .callout {
+      background: rgba(31, 41, 55, 0.4);
       border-left: 4px solid var(--accent);
-      background: #eff6ff;
-      color: #1e3a8a;
-      border-radius: 12px;
-    }
-
-    .contact {
-      margin-top: 28px;
-      padding-top: 18px;
-      border-top: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 0.96rem;
+      border-radius: 0 12px 12px 0;
+      padding: 16px 20px;
+      margin-top: 24px;
+      font-size: 0.95rem;
+      color: #e5e7eb;
     }
 
     code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.95em;
+      font-size: 0.9em;
+      background: rgba(9, 13, 22, 0.6);
+      border: 1px solid var(--border);
+      padding: 3px 6px;
+      border-radius: 6px;
+      color: #a7f3d0;
+    }
+
+    .contact {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Footer contact */
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Keyframes */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @media (max-width: 640px) {
-      .page {
-        padding: 18px 14px 40px;
+      .container {
+        padding: 20px 16px 40px;
       }
 
-      .hero,
-      .content {
-        padding-left: 20px;
-        padding-right: 20px;
+      .card {
+        padding: 24px;
+      }
+
+      .contact {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
       }
     }
   </style>
 </head>
 
 <body>
-  <main class="page">
-    <article class="card">
-      <header class="hero">
-        <h1>Privacy Policy</h1>
-        <p class="subtitle">URL Traversal Timer Chrome Extension</p>
-      </header>
+  <div class="container">
+    <header>
+      <div class="badge">Legal & Security</div>
+      <h1>Privacy Policy</h1>
+      <p>Your data stays on your machine. Local-first, offline, and secure.</p>
+    </header>
 
-      <section class="content">
+    <main>
+      <article class="card">
         <p>
-          URL Traversal Timer does not sell or share user data with third
-          parties. This extension is designed to run locally in your browser
+          URL Traversal Timer does not sell, track, or share user data with third
+          parties. This extension is designed to run entirely locally in your browser
           and use only the data needed to cycle through a user-defined list of
           URLs at a chosen interval.
         </p>
 
         <h2>Information We Collect</h2>
-        <p>The extension may store the following information locally on your device:</p>
+        <p>The extension may store the following configuration data locally on your device:</p>
         <ul>
-          <li>URLs you enter into the extension</li>
-          <li>The active tab URL used to initialize the extension</li>
-          <li>Traversal settings such as interval selection and running state</li>
-          <li>Website content in the form of user-entered URLs and the currently active tab URL</li>
+          <li>URLs you enter into the extension queue</li>
+          <li>The active tab URL used to initialize page-specific lists</li>
+          <li>Traversal state configurations (running state, pause state, and interval selections)</li>
         </ul>
 
         <h2>How We Use This Information</h2>
-        <p>We use this information only to provide the extension’s core function:</p>
+        <p>We use this information strictly to provide the extension’s core utility functions:</p>
         <ul>
-          <li>Save your URL list and settings</li>
-          <li>Rotate the active tab through your selected URLs</li>
-          <li>Pause, resume, and stop traversal correctly</li>
-          <li>Remember your configuration between sessions</li>
+          <li>Saving your URL list and loop settings between browser restarts</li>
+          <li>Cycling the active browser tab through your selected URLs</li>
+          <li>Maintaining pause, resume, and stop controls across session states</li>
         </ul>
 
         <h2>Where the Data Is Stored</h2>
         <p>
-          All stored data is kept locally in Chrome’s extension storage on
-          your device. It is not uploaded to any developer server because this
-          extension does not use a backend service.
+          All configuration and list settings are kept locally in Chrome’s secure extension storage on
+          your device (using <code>chrome.storage.local</code>). It is never transmitted or uploaded to any developer
+          server, analytics service, or third-party backend.
         </p>
 
         <h2>Data Sharing</h2>
         <p>
-          We do not sell, transfer, or disclose user data to third parties,
-          except where required by law.
+          We do not sell, transfer, disclose, or share any user data, except where explicitly required by law.
         </p>
 
-        <h2>Permissions</h2>
-        <p>The extension uses Chrome permissions only for its stated purpose:</p>
+        <h2>Required Browser Permissions</h2>
+        <p>The extension requests Chrome browser permissions only for its stated, minimum-scope purposes:</p>
         <ul>
-          <li><code>storage</code> to save the local URL list and settings</li>
-          <li><code>tabs</code> to read the active tab URL and switch to the next URL</li>
-          <li><code>alarms</code> to keep timing reliable in the background</li>
+          <li><code>storage</code> to save your local URL queues and timing configurations.</li>
+          <li><code>tabs</code> to read the active tab URL for list association and navigate pages.</li>
+          <li><code>alarms</code> to keep timing calculations accurate in the background without draining battery life.
+          </li>
         </ul>
 
         <h2>Children’s Privacy</h2>
         <p>
-          This extension is not intended for children under 13, and we do not
-          knowingly collect personal information from children.
+          This extension is not intended for children under 13, and we do not knowingly collect or request personal
+          information from children.
         </p>
 
         <h2>Changes to This Policy</h2>
         <p>
-          If this privacy policy changes, we will update this page with the
-          revised version.
+          If this privacy policy is revised in the future, we will update this document directly to reflect the updated
+          version.
         </p>
 
         <h2>Contact</h2>
         <p>
-          If you have questions about this privacy policy, contact the
-          developer at <code>mustakahmedkhan32@gmail.com</code>.
+          If you have questions about this privacy policy or security practices, you can contact the developer at
+          <code>mustakahmedkhan32@gmail.com</code>.
         </p>
 
-
         <div class="contact">
-          Last updated: April 23, 2026
+          <span>URL Traversal Timer Chrome Extension</span>
+          <span>Last updated: May 21, 2026</span>
         </div>
-      </section>
-    </article>
-  </main>
+      </article>
+    </main>
+
+    <footer class="footer">
+      <p>URL Traversal Timer Documentation • Built with Plasmo and React</p>
+      <p>Developer: <a href="https://mustak.vercel.app/">Mustak Ahmed Khan</a></p>
+    </footer>
+  </div>
 </body>
 
 </html>

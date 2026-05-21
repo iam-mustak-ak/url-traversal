@@ -5,10 +5,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>How It Works | URL Traversal Timer</title>
-  <meta name="description" content="Detailed guide on how the URL Traversal Timer Chrome Extension operates under the hood." />
+  <meta name="description"
+    content="Detailed guide on how the URL Traversal Timer Chrome Extension operates under the hood." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <style>
     :root {
       color-scheme: dark;
@@ -17,9 +20,11 @@
       --text: #f3f4f6;
       --text-muted: #9ca3af;
       --border: #1f2937;
-      --accent: #10b981; /* Emerald green matching the badge */
+      --accent: #10b981;
+      /* Emerald green matching the badge */
       --accent-glow: rgba(16, 185, 129, 0.15);
-      --accent-secondary: #06b6d4; /* Cyan */
+      --accent-secondary: #06b6d4;
+      /* Cyan */
       --radius: 16px;
     }
 
@@ -32,7 +37,7 @@
       margin: 0;
       font-family: 'Inter', system-ui, sans-serif;
       background-color: var(--bg);
-      background-image: 
+      background-image:
         radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
         radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 40%);
       color: var(--text);
@@ -197,6 +202,7 @@
       .grid-2 {
         grid-template-columns: 1fr;
       }
+
       .card {
         padding: 24px;
       }
@@ -250,7 +256,7 @@
       width: 100%;
       max-width: 280px;
       border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       padding: 16px;
       font-family: inherit;
     }
@@ -466,28 +472,59 @@
 
     /* Keyframes */
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @keyframes slideUp {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @keyframes rotateRing {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
     @keyframes counterRotateRing {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(-360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(-360deg);
+      }
     }
 
     @keyframes bounceArrow {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(4px); }
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(4px);
+      }
     }
   </style>
 </head>
@@ -497,7 +534,8 @@
     <header>
       <div class="badge">Architecture & Guide</div>
       <h1>URL Traversal Timer</h1>
-      <p>A high-performance Chrome extension cycling browser tabs through a queue of URLs, running completely offline and in the background.</p>
+      <p>A high-performance Chrome extension cycling browser tabs through a queue of URLs, running completely offline
+        and in the background.</p>
     </header>
 
     <!-- Tabs controls -->
@@ -513,22 +551,27 @@
         <div class="grid-2">
           <div>
             <h2><span class="step-num">1</span> Queue Your Target URLs</h2>
-            <p>The traversal runs inside your **active browser tab**, keeping you inside your current context and session authentication state (e.g. logged-in sessions stay active).</p>
+            <p>The traversal runs inside your **active browser tab**, keeping you inside your current context and
+              session authentication state (e.g. logged-in sessions stay active).</p>
             <ul class="feature-list">
-              <li><strong>Current URL Auto-Add:</strong> The active URL is loaded into the queue automatically on launch.</li>
+              <li><strong>Current URL Auto-Add:</strong> The active URL is loaded into the queue automatically on
+                launch.</li>
               <li><strong>Queue Customization:</strong> Add custom links or delete existing entries from the list.</li>
               <li><strong>Reordering Support:</strong> Drag and drop URLs to define your custom browsing sequence.</li>
             </ul>
           </div>
           <div class="visual-wrapper">
             <!-- Graphical mock of the popup URL list -->
-            <div style="background: #111827; border: 1px solid #374151; border-radius: 8px; width:100%; max-width:240px; padding: 12px; font-size: 0.75rem;">
+            <div
+              style="background: #111827; border: 1px solid #374151; border-radius: 8px; width:100%; max-width:240px; padding: 12px; font-size: 0.75rem;">
               <div style="color: #9ca3af; margin-bottom: 8px; font-weight: 500;">Active Queue:</div>
-              <div style="background: rgba(16,185,129,0.1); border: 1px solid var(--accent); padding: 8px; border-radius: 6px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <div
+                style="background: rgba(16,185,129,0.1); border: 1px solid var(--accent); padding: 8px; border-radius: 6px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
                 <span>🔗 google.com (Active)</span>
                 <span>🟢</span>
               </div>
-              <div style="background: #1f2937; border: 1px solid #374151; padding: 8px; border-radius: 6px; color: #9ca3af; display: flex; align-items: center; justify-content: space-between;">
+              <div
+                style="background: #1f2937; border: 1px solid #374151; padding: 8px; border-radius: 6px; color: #9ca3af; display: flex; align-items: center; justify-content: space-between;">
                 <span>🔗 github.com</span>
                 <span>≡</span>
               </div>
@@ -544,8 +587,11 @@
             <h2><span class="step-num">2</span> Configure Interval Timers</h2>
             <p>Switch between two advanced timing engines based on your workflow requirements:</p>
             <ul class="feature-list">
-              <li><strong>Fixed Mode:</strong> Choose presets (1 min, 3 min, 5 min) or key in a Custom value (in minutes). The system loops exactly on that duration.</li>
-              <li><strong>Random Mode (New!):</strong> Specify **Min** and **Max** bounds. The extension dynamically randomizes the wait time between your bounds at the start of each page load. Excellent for organic testing and mimicking human behavior.</li>
+              <li><strong>Fixed Mode:</strong> Choose presets (1 min, 3 min, 5 min) or key in a Custom value (in
+                minutes). The system loops exactly on that duration.</li>
+              <li><strong>Random Mode (New!):</strong> Specify **Min** and **Max** bounds. The extension dynamically
+                randomizes the wait time between your bounds at the start of each page load. Excellent for organic
+                testing and mimicking human behavior.</li>
             </ul>
           </div>
           <div class="visual-wrapper">
@@ -577,9 +623,12 @@
             <h2><span class="step-num">3</span> Control & Monitor</h2>
             <p>Fire up the traversal and monitor countdown progress directly from Chrome's interface:</p>
             <ul class="feature-list">
-              <li><strong>Circular HUD Display:</strong> A circular progress indicator displays remaining seconds in real-time in the popup.</li>
-              <li><strong>Dynamic Badge Counter:</strong> Check remaining seconds directly on the extension's toolbar icon badge without opening the popup!</li>
-              <li><strong>Controls:</strong> Start, Pause, Resume, and Stop controls give you full manipulation at any point in the cycle.</li>
+              <li><strong>Circular HUD Display:</strong> A circular progress indicator displays remaining seconds in
+                real-time in the popup.</li>
+              <li><strong>Dynamic Badge Counter:</strong> Check remaining seconds directly on the extension's toolbar
+                icon badge without opening the popup!</li>
+              <li><strong>Controls:</strong> Start, Pause, Resume, and Stop controls give you full manipulation at any
+                point in the cycle.</li>
             </ul>
           </div>
           <div class="visual-wrapper">
@@ -606,26 +655,31 @@
     <main id="tech-architecture" class="tab-content">
       <section class="card">
         <h2>System Dataflow</h2>
-        <p>The URL Traversal Timer employs a decoupled frontend and background worker architecture, using **Chrome Alarms** for persistent thread scheduling and **Plasmo Local Storage** as a reactive single source of truth.</p>
-        
+        <p>The URL Traversal Timer employs a decoupled frontend and background worker architecture, using **Chrome
+          Alarms** for persistent thread scheduling and **Plasmo Local Storage** as a reactive single source of truth.
+        </p>
+
         <div class="flow-container">
           <!-- Node 1 -->
           <div class="flow-node">
             <div class="flow-node-icon">📱</div>
             <div class="flow-node-text">
               <h4>Popup Client (popup.tsx)</h4>
-              <p>Standard React components with Tailwind styling. Dispatches start, pause, and stop actions to the background worker via Plasmo Messaging pipelines, and hooks into stored states for real-time reactive renders.</p>
+              <p>Standard React components with Tailwind styling. Dispatches start, pause, and stop actions to the
+                background worker via Plasmo Messaging pipelines, and hooks into stored states for real-time reactive
+                renders.</p>
             </div>
           </div>
-          
+
           <div class="flow-arrow">↓</div>
-          
+
           <!-- Node 2 -->
           <div class="flow-node">
             <div class="flow-node-icon">⚡</div>
             <div class="flow-node-text">
               <h4>Background Message Receiver (messages/startTraversal.ts)</h4>
-              <p>Receives asynchronous runtime payload from popup threads (URLs, intervals, random toggles, and boundary limits) and relays commands directly to the core traversal engine.</p>
+              <p>Receives asynchronous runtime payload from popup threads (URLs, intervals, random toggles, and boundary
+                limits) and relays commands directly to the core traversal engine.</p>
             </div>
           </div>
 
@@ -636,7 +690,9 @@
             <div class="flow-node-icon">⚙️</div>
             <div class="flow-node-text">
               <h4>State & Timing Controller (traversalEngine.ts)</h4>
-              <p>Core state orchestrator. Persists active status details into Chrome local storage. Computes exact next run timestamps (with randomized calculations on the fly when Random mode is enabled) and schedules the low-level alarms.</p>
+              <p>Core state orchestrator. Persists active status details into Chrome local storage. Computes exact next
+                run timestamps (with randomized calculations on the fly when Random mode is enabled) and schedules the
+                low-level alarms.</p>
             </div>
           </div>
 
@@ -647,21 +703,28 @@
             <div class="flow-node-icon">🔔</div>
             <div class="flow-node-text">
               <h4>Persistent Scheduler (chrome.alarms & chrome.tabs)</h4>
-              <p>Chrome Alarm triggers at the precise scheduled milliseconds. The service worker wakes up, navigates the active tab to the next URL, computes the next interval duration, updates Chrome's extension badge UI, and schedules the next cycle seamlessly.</p>
+              <p>Chrome Alarm triggers at the precise scheduled milliseconds. The service worker wakes up, navigates the
+                active tab to the next URL, computes the next interval duration, updates Chrome's extension badge UI,
+                and schedules the next cycle seamlessly.</p>
             </div>
           </div>
         </div>
 
         <div class="callout">
-          <strong>Under The Hood Note:</strong> Standard JavaScript `setTimeout` and `setInterval` execution contexts are aggressively throttled or completely killed when Chrome extension popups close or background pages suspend. By offloading scheduling to <code>chrome.alarms</code>, the timer maintains <strong>100% reliable execution and millisecond accuracy</strong> across tab states without keeping heavy background pages alive.
+          <strong>Under The Hood Note:</strong> Standard JavaScript `setTimeout` and `setInterval` execution contexts
+          are aggressively throttled or completely killed when Chrome extension popups close or background pages
+          suspend. By offloading scheduling to <code>chrome.alarms</code>, the timer maintains <strong>100% reliable
+            execution and millisecond accuracy</strong> across tab states without keeping heavy background pages alive.
         </div>
       </section>
 
       <section class="card">
         <h2>Local Storage Schema</h2>
-        <p>This extension runs entirely locally on your machine and uses zero backend dependencies. The data layout inside `chrome.storage.local` is structured as follows:</p>
-        
-        <pre style="background: #090d16; border: 1px solid var(--border); border-radius: 8px; padding: 20px; font-family: monospace; font-size: 0.85rem; color: #a7f3d0; overflow-x: auto;">
+        <p>This extension runs entirely locally on your machine and uses zero backend dependencies. The data layout
+          inside `chrome.storage.local` is structured as follows:</p>
+
+        <pre
+          style="background: #090d16; border: 1px solid var(--border); border-radius: 8px; padding: 20px; font-family: monospace; font-size: 0.85rem; color: #a7f3d0; overflow-x: auto;">
 {
   // Current active traversal state (Key: "utt:tab:[tabId]:state")
   "utt:tab:1320491:state": {
@@ -690,7 +753,7 @@
 
     <footer class="footer">
       <p>URL Traversal Timer Documentation • Built with Plasmo and React</p>
-      <p>Developer: <a href="mailto:mustakahmedkhan32@gmail.com">Mustak Ahmed Khan</a></p>
+      <p>Developer: <a href="https://mustak.vercel.app/">Mustak Ahmed Khan</a></p>
     </footer>
   </div>
 
