@@ -4,7 +4,15 @@ function matchesSkipPatterns(url: string, skipPatterns?: string[]): boolean {
   if (!skipPatterns || skipPatterns.length === 0) return false
   return skipPatterns.some(pattern => {
     const normalized = pattern.replace(/\*+$/, "")
-    return url.startsWith(normalized)
+    if (url === normalized) return true
+    if (normalized.endsWith("/")) {
+      return url.startsWith(normalized)
+    }
+    if (url.startsWith(normalized)) {
+      const nextChar = url.charAt(normalized.length)
+      return nextChar === "/" || nextChar === "?" || nextChar === "#"
+    }
+    return false
   })
 }
 
@@ -161,6 +169,22 @@ export async function resumeTraversal(tabId: number) {
     await storage.set(getRuntimeKey(tabId), state)
     schedule(tabId, state.nextRunAt)
     updateBadge(tabId, state.nextRunAt)
+  }
+}
+
+export async function handleTabUpdate(tabId: number, url: string) {
+  const state = await storage.get<TraversalState>(getRuntimeKey(tabId))
+  if (!state || !state.isRunning || state.isPaused) return
+
+  const isUrlSkipped = matchesSkipPatterns(url, state.skipPatterns)
+  if (isUrlSkipped) {
+    state.isPaused = true
+    await storage.set(getRuntimeKey(tabId), state)
+
+    await chrome.alarms.clear(alarmName(tabId))
+    stopBadgeTimer(tabId)
+    chrome.action.setBadgeText({ tabId, text: "PAUSE" })
+    chrome.action.setBadgeBackgroundColor({ tabId, color: "#F59E0B" })
   }
 }
 
